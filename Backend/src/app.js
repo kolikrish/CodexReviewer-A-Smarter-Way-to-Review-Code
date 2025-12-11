@@ -4,6 +4,7 @@ const aiRoutes = require('./routes/ai.routes');
 const cors = require('cors');
 
 app.use(express.json())
+app.use(express.urlencoded({extended: true}));
 
 app.use(cors())
 
