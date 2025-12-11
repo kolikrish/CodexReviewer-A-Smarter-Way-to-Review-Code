@@ -135,7 +135,7 @@ html, body {
   font-size: 14px;
   color: #8a8a8a;
   border-top: 1px solid var(--medium-gray);
-  height: 40px; /* Fixed height for footer */
+  height: 50px; /* Fixed height for footer */
 }
 
 /* Media query for responsive design */

@@ -33,7 +33,36 @@ const Code = () => {
   return (
     <>
       <div className="app-container">
-        <header className="app-header">
+        <header className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <button
+            onClick={() => {
+              localStorage.removeItem("token");
+              window.location.href = "/login";
+            }}
+            aria-label="Logout"
+            style={{
+              position: 'absolute',
+              left: 24,
+              background: 'none',
+              border: 'none',
+              padding: 8,
+              cursor: 'pointer',
+              outline: 'none',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = "#222"}
+            onMouseOut={e => e.currentTarget.style.background = "none"}
+          >
+            {/* Logout/Exit Icon (SVG) */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 16l4-4m0 0l-4-4m4 4H9" />
+              <path d="M13 5V3a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" />
+            </svg>
+          </button>
           <h1>Code Analyzer</h1>
         </header>
 

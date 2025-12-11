@@ -88,6 +88,9 @@ const styles = {
   }
 }
 
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 const Login = () => {
   const [form, setForm] = useState({
     email: '',
@@ -96,6 +99,10 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [passwordFocus, setPasswordFocus] = useState(false)
+  const [error, setError] = useState(null)
+  const [message, setMessage] = useState(null)
+
+  const navigate = useNavigate();
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -105,12 +112,37 @@ const Login = () => {
     }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setSubmitted(true)
-    // TODO: Call login API here
-    // For now, just log form values
-    console.log(form)
+    setError(null)
+    setMessage(null)
+    try {
+      const res = await axios.post('http://localhost:3000/user/login', form);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+
+        // Use backend message if exists
+        if (res.data.message) {
+          setMessage(res.data.message);
+        } else {
+          setMessage("Login successful");
+        }
+
+        // Give user a brief moment to see the message, then redirect.
+        setTimeout(() => {
+          navigate('/code');
+        }, 900); // Adjust delay as needed
+      } else if (res.data && res.data.message) {
+        setMessage(res.data.message);
+      }
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(err.response.data.error)
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    }
   }
 
   return (
@@ -124,6 +156,7 @@ const Login = () => {
             </label>
             <input
               style={styles.input}
+              placeholder='Enter the email'
               type="email"
               id="email"
               name="email"
@@ -144,6 +177,7 @@ const Login = () => {
                   paddingRight: '2.5rem',
                   ...(passwordFocus ? styles.inputFocus : {})
                 }}
+                placeholder='Enter the password'
                 type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
@@ -186,12 +220,18 @@ const Login = () => {
           >
             Login
           </button>
-          {submitted && (
+          {(message || error) && (
             <div style={styles.message}>
-              Login form submitted! (Form data logged in console)
+              {message ? message : error}
             </div>
           )}
         </form>
+        <div style={{ marginTop: "1rem", textAlign: "center" }}>
+          <span>Don't have an account? </span>
+          <a href="/signup" style={{ color: "#2964f7", textDecoration: "underline", cursor: "pointer" }}>
+            Sign up
+          </a>
+        </div>
       </div>
     </div>
   )

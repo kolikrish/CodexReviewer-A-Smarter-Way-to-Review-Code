@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import axios from 'axios';
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const styles = {
   outer: {
@@ -105,6 +107,20 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [passwordFocus, setPasswordFocus] = useState(false)
+  const [error, setError] = useState(null)
+  const [message, setMessage] = useState(null)
+
+  // If user is "logged in" (has a token), clear any data from placeholders
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setForm({
+        name: "",
+        email: "",
+        password: ""
+      });
+    }
+  }, []);
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -114,12 +130,45 @@ const Signup = () => {
     }))
   }
 
-  function handleSubmit(e) {
+  const navigate = useNavigate();
+
+  async function handleSubmit(e) {
     e.preventDefault()
     setSubmitted(true)
-    // TODO: Call signup API here
-    // For now, just log form values.
-    console.log(form)
+    setError(null)
+    setMessage(null)
+    try {
+      const res = await axios.post('http://localhost:3000/user/register', form)
+      // Prefer backend message if exists
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token)
+        setMessage(res.data.message ? res.data.message : "Signup successful!")
+        setForm({
+          name: '',
+          email: '',
+          password: ''
+        })
+        // Give user a moment to see the message before navigating
+        setTimeout(() => {
+          navigate("/code");
+        }, 900);
+        return;
+      }
+      if (res.data) {
+        setMessage(res.data.message ? res.data.message : "Signup successful!")
+        setForm({
+          name: '',
+          email: '',
+          password: ''
+        })
+      }
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(err.response.data.error)
+      } else {
+        setError('Signup failed. Please try again.')
+      }
+    }
   }
 
   return (
@@ -133,6 +182,7 @@ const Signup = () => {
             </label>
             <input
               style={styles.input}
+              placeholder='Enter the name'
               type="text"
               id="name"
               name="name"
@@ -148,6 +198,7 @@ const Signup = () => {
             </label>
             <input
               style={styles.input}
+              placeholder='Enter the email'
               type="email"
               id="email"
               name="email"
@@ -168,6 +219,7 @@ const Signup = () => {
                   paddingRight: '2.5rem',
                   ...(passwordFocus ? styles.inputFocus : {})
                 }}
+                placeholder='Enter the password'
                 type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
@@ -211,12 +263,18 @@ const Signup = () => {
           >
             Sign Up
           </button>
-          {submitted && (
+          {(message || error) && (
             <div style={styles.message}>
-              Signup successful! (Form data logged in console)
+              {message ? message : error}
             </div>
           )}
         </form>
+        <div style={{ marginTop: "1rem", textAlign: "center" }}>
+          <span>Already have an account? </span>
+          <a href="/login" style={{ color: "#2964f7", textDecoration: "underline", cursor: "pointer" }}>
+            Log in
+          </a>
+        </div>
       </div>
     </div>
   )
