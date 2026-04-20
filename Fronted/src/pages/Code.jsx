@@ -3,16 +3,30 @@ import Editor from "react-simple-code-editor"
 import 'prismjs/themes/prism-tomorrow.css'
 import prism from 'prismjs'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import { 
+  Code2, 
+  LogOut, 
+  Play, 
+  FileCode, 
+  Terminal as TerminalIcon, 
+  ClipboardCheck,
+  Loader2,
+  Sparkles
+} from 'lucide-react'
 import '../App.css';
 
 const Code = () => {
+  const navigate = useNavigate();
+  
   useEffect(() => {
     prism.highlightAll()
   }, [])
 
-  const [code, setCode] = useState(`function sum() {
-    return 1 + 1
-  }`)
+  const [code, setCode] = useState(`function calculateComplexity(n) {
+  if (n <= 1) return 1;
+  return calculateComplexity(n - 1) + calculateComplexity(n - 2);
+}`)
 
   const [output, setOutput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,110 +34,98 @@ const Code = () => {
   async function reviewCode() {
     setIsLoading(true)
     try {
-      const prompt = `Explain the following code in detail: ${code}`
+      const prompt = `Review this code for quality, performance, and best practices. Provide specific suggestions: ${code}`
       const response = await axios.post('http://localhost:3000/ai/get-review', { prompt })
       setOutput(response.data)
     } catch (error) {
-      setOutput('Error analyzing code. Please try again.',error);
+      setOutput('Error analyzing code. Please ensure the backend is running and try again.');
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
   return (
-    <>
-      <div className="app-container">
-        <header className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              window.location.href = "/login";
-            }}
-            aria-label="Logout"
-            style={{
-              position: 'absolute',
-              left: 24,
-              background: 'none',
-              border: 'none',
-              padding: 8,
-              cursor: 'pointer',
-              outline: 'none',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s'
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "#222"}
-            onMouseOut={e => e.currentTarget.style.background = "none"}
+    <div className="app-container">
+      <header className="app-header">
+        <div className="header-logo">
+          <Code2 size={24} />
+          Codex<span>Reviewer</span>
+        </div>
+        <button className="logout-btn" onClick={handleLogout}>
+          <LogOut size={16} />
+          Sign Out
+        </button>
+      </header>
+
+      <main className="content-container">
+        <div className="editor-section">
+          <div className="section-header">
+            <FileCode size={18} color="#52b788" />
+            <h2>Source Code</h2>
+          </div>
+          <div className="code-editor">
+            <Editor
+              value={code}
+              onValueChange={code => setCode(code)}
+              highlight={code => prism.highlight(code, prism.languages.javascript, 'javascript')}
+              padding={24}
+              style={{
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: 15,
+                height: '100%',
+                width: '100%',
+                lineHeight: '1.5',
+              }}
+            />
+          </div>
+          <button 
+            className="review-button"
+            onClick={reviewCode}
+            disabled={isLoading || !code.trim()}
           >
-            {/* Logout/Exit Icon (SVG) */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 16l4-4m0 0l-4-4m4 4H9" />
-              <path d="M13 5V3a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" />
-            </svg>
+            {isLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Sparkles size={18} />
+                Analyze Logic
+              </>
+            )}
           </button>
-          <h1>Code Analyzer</h1>
-        </header>
+        </div>
 
-        <main className="content-container">
-          <div className="editor-section">
-            <div className="section-header">
-              <h2>Your Code</h2>
-            </div>
-            <div className="code-editor">
-              <Editor
-                value={code}
-                onValueChange={code => setCode(code)}
-                highlight={code => prism.highlight(code, prism.languages.javascript, 'javascript')}
-                padding={20}
-                style={{
-                  fontFamily: "'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
-                  fontSize: 16,
-                  height: '100%',
-                  width: '100%',
-                  backgroundColor: '#1a1a1a',
-                  borderRadius: '0',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                }}
-              />
-            </div>
-            <button 
-              className="review-button"
-              onClick={reviewCode}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Analyzing...' : 'Analyze Code'}
-            </button>
+        <div className="output-section">
+          <div className="section-header">
+            <TerminalIcon size={18} color="#52b788" />
+            <h2>AI Insights</h2>
           </div>
-
-          <div className="output-section">
-            <div className="section-header">
-              <h2>Analysis</h2>
-            </div>
-            <div className="output-container">
-              {output ? (
-                <pre>
-                  <code>{output}</code>
-                </pre>
-              ) : (
-                <div className="placeholder-message">
-                  <p>Your code analysis will appear here</p>
-                </div>
-              )}
-            </div>
+          <div className="output-container">
+            {output ? (
+              <pre>
+                <code>{output}</code>
+              </pre>
+            ) : (
+              <div className="placeholder-message">
+                <ClipboardCheck size={48} strokeWidth={1} style={{ opacity: 0.15 }} />
+                <p>Run analysis to see AI-driven code reviews and logic refinements.</p>
+              </div>
+            )}
           </div>
-        </main>
+        </div>
+      </main>
 
-        <footer className="app-footer">
-          <p>Code Analyzer • Built with React</p>
-        </footer>
-      </div>
-    </>
+      <footer className="app-footer">
+        <p>© 2024 CodexReviewer Engine v1.5 • Powered by Gemini AI</p>
+      </footer>
+    </div>
   )
 }
 
